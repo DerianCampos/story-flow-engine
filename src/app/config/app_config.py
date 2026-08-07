@@ -4,12 +4,14 @@ from pyaml_env import parse_config
 from threading import Lock
 from typing import Dict, Any, Optional
 
-from src.app.shared.utils.log_util import log
+from src.app.shared.log_config import get_logger, initialize_logging
 from src.app.shared.utils.retry_decorator import retry_on_exception
 from src.app.config.paths import Paths
 
 APP_ENV = "APP_ENV"
-DEFAULT_ENVIRONMENT = "dev"
+DEFAULT_ENVIRONMENT = "local"
+
+log = get_logger(__name__)
 
 
 class AppConfig:
@@ -52,9 +54,25 @@ class AppConfig:
         Loads the application configuration by:
         - Fetching environment variables.
         - Parsing the environment-specific YAML configuration file.
+        - Initializing the root logger from the `logging` config section.
         """
         self.load_environment_variables()
         self.load_config_yaml_file()
+        self.initialize_logging()
+
+    def initialize_logging(self):
+        """
+        Configures the root logger from the `logging` section of the YAML config.
+        Local/container runs use plain text output (`format_type: "text"`);
+        dev/prod use single-line JSON (the default).
+        """
+        logging_config = self.get_config("logging", default={})
+        initialize_logging(
+            level=logging_config.get("level", "INFO").upper(),
+            format_type=logging_config.get("format_type", "json"),
+            console_enabled=logging_config.get("console", {}).get("enabled", True),
+            console_colored=logging_config.get("console", {}).get("colored", False),
+        )
 
     @retry_on_exception()
     def load_environment_variables(self):

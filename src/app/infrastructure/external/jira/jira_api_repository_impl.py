@@ -6,9 +6,11 @@ from src.app.infrastructure.external.jira.helpers import JiraApiHelpers
 from src.app.application.interfaces.jira_repository import JiraRepository
 from src.app.domain import UserStory
 from src.app.domain.exceptions import UnauthorizedWorkspaceAccess, BusinessRuleViolationException
-from src.app.infrastructure.logging.logger import AppLogger
+from src.app.shared.log_config import get_logger
 from src.app.domain.entities import Epic, IssueStatus
 from src.app.domain.value_objects import IssueId, Priority
+
+logger = get_logger(__name__)
 
 
 class JiraApiRepositoryImpl(JiraRepository):
@@ -42,7 +44,6 @@ class JiraApiRepositoryImpl(JiraRepository):
             httpx.HTTPError: If the API request fails.
         """
         url = f"{self.base_url}/rest/api/3/issue/{issue_id.key}"
-        logger = AppLogger.instance()
         logger.info("Making JIRA API call", extra={"email": self.email, "url": url})
 
         async with httpx.AsyncClient() as client:
@@ -95,7 +96,6 @@ class JiraApiRepositoryImpl(JiraRepository):
             }
         }
 
-        logger = AppLogger.instance()
         logger.info("Creating a new Epic in Jira", extra={"payload": payload})
 
         async with httpx.AsyncClient() as client:

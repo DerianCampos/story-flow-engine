@@ -18,7 +18,6 @@ cp .env.example .env
 | Variable | Description | Example |
 |----------|-------------|---------|
 | `APP_ENV` | Environment name, selects the YAML config file | `local` |
-| `LOG_LEVEL` | Logging verbosity (`debug`, `info`, `warning`, `error`) | `debug` |
 | `JIRA_BASE_URL` | Your Jira instance URL | `https://your-domain.atlassian.net` |
 | `JIRA_EMAIL` | Email associated with your Jira account | `you@example.com` |
 | `JIRA_API_TOKEN` | API token from Atlassian | `ATATT3...` |
@@ -46,7 +45,7 @@ app:
 
 logging:
   level: "debug"
-  format: "%(levelname)s %(asctime)s - %(message)s"
+  format_type: "text"
   console:
     enabled: true
     colored: true
@@ -60,6 +59,15 @@ jira:
   max_retries: 3
   project_key: "OPH"
 ```
+
+### Logging Settings
+
+| Setting | Description | Default |
+|---------|-------------|---------|
+| `logging.level` | Log verbosity (`debug`, `info`, `warning`, `error`) | `info` |
+| `logging.format_type` | Output format: `text` (plain, human-readable) or `json` (single-line structured) | `json` |
+
+Use `format_type: "text"` for local and container runs so logs are easy to read. Use `format_type: "json"` for dev/prod so log aggregators can parse structured fields. Every record carries `request_id` and `user_id` correlation IDs, plus any `extra={...}` fields passed at the call site.
 
 ### Key Jira Settings
 

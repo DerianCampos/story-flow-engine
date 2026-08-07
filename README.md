@@ -117,8 +117,8 @@ src/app/
 │   └── external/jira/           # httpx-based Jira REST client
 ├── presentation/                # Typer CLI + InquirerPy menus
 └── shared/                      # Cross-cutting utilities
-    ├── logging/                 # Structured logger (AppLogger)
-    └── utils/                   # Retry decorator, log utilities
+    ├── logging.py               # Structured logger (JSON or plain text)
+    └── utils/                   # Retry decorator
 ```
 
 The project follows **Clean Architecture** with **Domain-Driven Design**. Entities use factory methods, value objects are immutable, and the application layer depends only on abstractions (ports), not concrete implementations.

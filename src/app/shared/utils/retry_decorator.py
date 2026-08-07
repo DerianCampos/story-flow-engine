@@ -2,7 +2,9 @@ import backoff
 from typing import Tuple, Type
 
 from src.app.shared.global_variables import MAX_ERROR_RETRIES
-from src.app.shared.utils.log_util import log
+from src.app.shared.log_config import get_logger
+
+log = get_logger(__name__)
 
 def retry_on_exception(max_tries=MAX_ERROR_RETRIES):
     """
