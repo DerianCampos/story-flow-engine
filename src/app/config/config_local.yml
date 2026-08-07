@@ -4,7 +4,7 @@ app:
 
 logging:
   level: "debug"
-  format: "%(levelname)s %(asctime)s - %(message)s"
+  format_type: "text"
   console:
     enabled: true
     colored: true

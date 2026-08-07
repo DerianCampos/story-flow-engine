@@ -263,13 +263,13 @@ The presentation layer creates a `JiraApiRepositoryImpl` via the `get_jira_repos
 
 Cross-cutting utilities used across layers, independent of business logic.
 
-#### Logging (`AppLogger`)
+#### Logging (`src/app/shared/logging.py`)
 
-Singleton logger with YAML-configurable format and level. Wraps Python's `logging` with structured extras via `**kwargs`. Lives in `src/app/shared/logging/` and is consumed by the infrastructure layer (e.g., the Jira client).
+Centralized structured logging with request-correlation context. Emits single-line JSON by default (dev/prod) or human-readable plain text for local/container runs, selected via the `format_type` key in the environment YAML config (`text` or `json`). Correlation IDs (`request_id`, `user_id`) are injected into every record via context variables. Callers obtain a logger with `get_logger(__name__)`; `AppConfig` calls `initialize_logging()` at startup.
 
 #### Utilities (`src/app/shared/utils/`)
 
-Reusable helpers: `retry_decorator` (exponential backoff for transient failures) and `log_util` (module-level logger). Used by config loading and repository operations.
+Reusable helpers: `retry_decorator` (exponential backoff for transient failures). Used by config loading and repository operations.
 
 ## Dependency Injection
 
