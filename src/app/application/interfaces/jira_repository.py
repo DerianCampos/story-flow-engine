@@ -1,6 +1,7 @@
 from abc import ABC, abstractmethod
 from typing import Optional, List
 
+from src.app.application.dtos.story_dtos import CreateStoryDtoRequest
 from src.app.domain.entities import Epic, UserStory
 from src.app.domain.value_objects import IssueId
 
@@ -23,6 +24,20 @@ class JiraRepository(ABC):
 
         Returns:
             The Epic entity, or None if not found.
+        """
+        pass
+
+    @abstractmethod
+    async def create_epic(self, summary: str, description: str) -> Epic:
+        """
+        Creates a new Epic.
+
+        Args:
+            summary: Summary of the epic.
+            description: Description of the epic.
+
+        Returns:
+            The created Epic entity, including the new ID.
         """
         pass
 
@@ -77,12 +92,13 @@ class JiraRepository(ABC):
         pass
 
     @abstractmethod
-    async def create_story(self, story: UserStory) -> UserStory:
+    async def create_story(self, request: CreateStoryDtoRequest) -> UserStory:
         """
-        Creates a new User Story in Jira.
+        Creates a new User Story in Jira, linked to a parent epic.
 
         Args:
-            story: The UserStory entity to create.
+            request: The fields needed to create the story (summary,
+                description, parent epic key, and optional estimate/labels).
 
         Returns:
             The created UserStory entity, including the new ID from Jira.

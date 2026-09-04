@@ -1,14 +1,19 @@
-import json
-
 import typer
 import asyncio
+from rich.console import Console
+from rich.markdown import Markdown
+from rich.panel import Panel
+from rich.table import Table
+from src.app.application.use_cases import CreateEpicWithStories, GetEpicWithStories
+from src.app.domain.exceptions import BusinessRuleViolationException, EntityNotFoundException
 from src.app.infrastructure.external.jira.dependencies import get_jira_repository
-from src.app.domain.value_objects import IssueId, Priority
+from src.app.domain.value_objects import Priority
 from InquirerPy import inquirer
 import os
 
 # Initialize Typer app with help when no command is provided
 app = typer.Typer(no_args_is_help=False)
+console = Console()
 
 
 def show_welcome_message():
@@ -41,7 +46,7 @@ def interactive_menu(skip_initial_prompt=False):
         show_welcome_message()
         menu_options = {
             "get_epic": "Retrieve an epic and its stories by JIRA key",
-            "create_epic": "Create a new epic in JIRA from file",
+            "create_epic_with_stories": "Load an epic and its stories from a folder and upload to JIRA",
             "exit": "Exit the application",
         }
         menu_choice = inquirer.select(
@@ -52,12 +57,14 @@ def interactive_menu(skip_initial_prompt=False):
         if menu_choice == "get_epic":
             jira_key = inquirer.text(message="Enter the JIRA key:").execute()
             fetch_epic(jira_key)
-        elif menu_choice == "create_epic":
-            file_path = inquirer.text(message="Enter the path to the Epic file:").execute()
-            if not file_path:
-                file_path = "data/EPIC-0-foundational/epic-0.md"
+        elif menu_choice == "create_epic_with_stories":
+            folder_path = inquirer.text(
+                message="Enter the path to the folder containing epic.md and stories.md:"
+            ).execute()
+            if not folder_path:
+                folder_path = "data/EPIC-0-foundational"
 
-            create_epic(file_path)
+            create_epic_with_stories(folder_path)
         elif menu_choice == "exit":
             typer.echo("Thanks for using Story Flow Engine! Have a great day!")
             break
@@ -75,76 +82,74 @@ def fetch_epic(issue_id: str):
     """
 
     async def main():
-        # Retrieve JiraApiRepository instance
         jira_repo = get_jira_repository()
+        use_case = GetEpicWithStories(jira_repository=jira_repo)
         try:
-            # Convert string to IssueId value object
-            issue_id_vo = IssueId.from_string(issue_id)
-            # Await the async get_epic method
-            epic = await jira_repo.get_epic(issue_id_vo)
-            typer.echo("Epic Summary:")
-            typer.echo(f"Key: {epic.key}")
-            typer.echo(f"Summary: {epic.summary}")
-            typer.echo(f"Description: {epic.description}")
+            epic_dto = await use_case.execute(issue_id)
+        except EntityNotFoundException as e:
+            typer.echo(f"Epic not found: {e}")
+            return
         except Exception as e:
             typer.echo(f"Error fetching epic: {e}")
+            return
+
+        body = Markdown(f"**{epic_dto.summary}**\n\n{epic_dto.description}")
+        console.print(Panel(body, title=f"Epic: {epic_dto.key}"))
+
+        if not epic_dto.user_stories:
+            return
+
+        table = Table(title=f"Stories ({len(epic_dto.user_stories)})")
+        table.add_column("Key")
+        table.add_column("Summary")
+        table.add_column("Status")
+        for story in epic_dto.user_stories:
+            table.add_row(story.key, story.summary, story.status)
+        console.print(table)
 
     # Use asyncio.run to handle the async call
     asyncio.run(main())
 
 
-def create_epic(file_path: str):
+def create_epic_with_stories(folder_path: str):
     """
-    Create a new epic in JIRA.
+    Load an epic and its stories from a folder and create them in JIRA.
 
-    Calls the JIRA API to create the epic and displays the result.
+    Reads `epic.md` (required) and `stories.md` (optional) from the given
+    folder, creates the epic, then creates each story linked to it. Story
+    creation failures are reported individually and do not stop the rest.
+
+    Args:
+        folder_path (str): Path to a folder containing `epic.md` and,
+            optionally, `stories.md` (e.g. "data/EPIC-0-foundational").
     """
 
     async def main():
-        # Retrieve JiraApiRepository instance
         jira_repo = get_jira_repository()
+        use_case = CreateEpicWithStories(jira_repository=jira_repo)
 
         try:
-            with open(file_path, 'r') as file:
-                epic_data = file.read()
-
-            # Parse Markdown data to extract epic details
-            lines = epic_data.splitlines()
-
-            epic_key = None
-            epic_title = None
-            epic_description_lines = []
-            
-            for idx, line in enumerate(lines):
-                if line.startswith('**Epic Key**:'):
-                    epic_key = line.split(':', 1)[1].strip()
-                elif line.startswith('**Epic Title**:'):
-                    epic_title = line.split(':', 1)[1].strip()
-                elif line.startswith('**Epic Description:**'):
-                    epic_description_lines = lines[idx + 1:]
-
-            if not epic_key or not epic_title:
-                raise ValueError("Missing 'Epic Key' or 'Epic Title' in the Markdown file.")
-
-            summary = f"{epic_key} - {epic_title}"
-            description = '\n'.join(line.strip() for line in epic_description_lines).strip()
-
-            if not summary:
-                raise ValueError("Missing required fields: 'Epic Key' and/or `Epic Title` in the Markdown file.")
-
-        except (FileNotFoundError, json.JSONDecodeError, KeyError) as e:
-            typer.echo(f"Invalid file or content. Error: {e}")
+            result = await use_case.execute(folder_path)
+        except BusinessRuleViolationException as e:
+            typer.echo(f"Could not create epic: {e}")
             return
 
-        # Call the async create_epic method
-        new_epic = await jira_repo.create_epic(
-            summary=summary, description=description
-        )
+        body = Markdown(f"**{result.epic.summary}**\n\n{result.epic.description}")
+        console.print(Panel(body, title=f"Epic Created: {result.epic.key}"))
 
-        typer.echo("Epic Successfully Created!")
-        typer.echo(f"Key: {new_epic.key}")
-        typer.echo(f"Summary: {new_epic.summary}")
-        typer.echo(f"Description: {new_epic.description}")
+        if not result.story_results:
+            return
+
+        table = Table(title=f"Stories ({len(result.story_results)})")
+        table.add_column("Story ID")
+        table.add_column("Status")
+        table.add_column("Result")
+        for story_result in result.story_results:
+            if story_result.success:
+                table.add_row(story_result.story_id, "[green]OK[/green]", story_result.key)
+            else:
+                table.add_row(story_result.story_id, "[red]FAILED[/red]", story_result.error)
+        console.print(table)
 
     # Use asyncio.run to handle the async call
     asyncio.run(main())

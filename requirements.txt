@@ -22,3 +22,4 @@ jira>=3.5.0
 # Interactive CLI
 typer>=0.9.0
 InquirerPy
+rich>=13.0.0
