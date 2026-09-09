@@ -69,13 +69,14 @@ class JiraApiRepositoryImpl(JiraRepository):
 
         return JiraApiHelpers.map_epic(data)
 
-    async def create_epic(self, summary: str, description: str) -> Epic:
+    async def create_epic(self, summary: str, description: str, labels: Optional[List[str]] = None) -> Epic:
         """
         Create a new Epic in Jira.
 
         Args:
             summary (str): Summary of the epic.
             description (str): Description of the epic.
+            labels (Optional[List[str]]): Optional labels to attach to the epic.
 
         Returns:
             Epic: The created Epic.
@@ -90,6 +91,7 @@ class JiraApiRepositoryImpl(JiraRepository):
                 "summary": summary,
                 "description": markdown_to_adf(description),
                 "issuetype": {"name": "Epic"},
+                "labels": labels or [],
             }
         }
 
@@ -233,6 +235,7 @@ class JiraApiRepositoryImpl(JiraRepository):
             # custom field instead. Confirm against the real project before relying
             # on this in production.
             "parent": {"key": request.epic_key},
+            "labels": request.labels,
         }
 
         payload = {"fields": fields}
