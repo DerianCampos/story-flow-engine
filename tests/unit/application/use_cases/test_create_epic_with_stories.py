@@ -89,7 +89,7 @@ class TestCreateEpicWithStories:
         assert [r.key for r in result.story_results] == ["PROJ-2", "PROJ-3"]
 
         mock_jira_repo.create_epic.assert_called_once_with(
-            summary="EPIC-0 - Sample Epic", description="Some description."
+            summary="EPIC-0 - Sample Epic", description="Some description.", labels=[]
         )
         assert mock_jira_repo.create_story.call_count == 2
         first_request = mock_jira_repo.create_story.call_args_list[0].args[0]

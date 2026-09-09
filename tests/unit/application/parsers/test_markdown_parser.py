@@ -67,11 +67,12 @@ STORIES_MARKDOWN = """# Stories for Epic: Sample
 
 class TestParseEpicMarkdown:
     def test_parses_summary_and_description(self):
-        summary, description = parse_epic_markdown(EPIC_MARKDOWN)
+        summary, description, labels = parse_epic_markdown(EPIC_MARKDOWN)
 
         assert summary == "EPIC-0 - Sample Epic"
         assert "Problem Statement: Something is missing." in description
         assert "- One thing" in description
+        assert labels == ["foundational"]
 
     def test_missing_required_fields_raises(self):
         with pytest.raises(BusinessRuleViolationException):
@@ -94,6 +95,7 @@ class TestParseStoriesMarkdown:
         assert first.i_want_to == "do the first thing,"
         assert first.so_that == "value is delivered."
         assert first.acceptance_criteria == ["Given X, then Y.", "Given A, then B."]
+        assert first.labels == []
 
         assert second.story_id == "US-EP0-BE-002"
         assert second.priority is None
