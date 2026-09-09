@@ -28,13 +28,16 @@ class JiraRepository(ABC):
         pass
 
     @abstractmethod
-    async def create_epic(self, summary: str, description: str) -> Epic:
+    async def create_epic(
+        self, summary: str, description: str, labels: Optional[List[str]] = None
+    ) -> Epic:
         """
         Creates a new Epic.
 
         Args:
             summary: Summary of the epic.
             description: Description of the epic.
+            labels: Optional labels to attach to the epic.
 
         Returns:
             The created Epic entity, including the new ID.

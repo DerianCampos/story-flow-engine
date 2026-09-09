@@ -54,8 +54,8 @@ class CreateEpicWithStories:
         folder = Path(folder_path)
         epic_markdown = self._read_required_file(folder / self._EPIC_FILENAME)
 
-        summary, description = parse_epic_markdown(epic_markdown)
-        epic = await self.jira_repository.create_epic(summary=summary, description=description)
+        summary, description, labels = parse_epic_markdown(epic_markdown)
+        epic = await self.jira_repository.create_epic(summary=summary, description=description, labels=labels)
 
         story_results = await self._create_stories(folder / self._STORIES_FILENAME, epic)
 
@@ -76,6 +76,7 @@ class CreateEpicWithStories:
                     description=build_story_description(story),
                     epic_key=epic.key,
                     story_points=story.story_points,
+                    labels=story.labels,
                 )
                 created_story = await self.jira_repository.create_story(request)
                 results.append(

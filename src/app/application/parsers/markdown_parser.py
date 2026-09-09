@@ -26,11 +26,17 @@ class ParsedStory:
     acceptance_criteria: list[str] = field(default_factory=list)
     priority: Optional[str] = None
     story_points: Optional[int] = None
+    labels: list[str] = field(default_factory=list)
 
 
-def parse_epic_markdown(markdown_content: str) -> tuple[str, str]:
+def _parse_labels(raw_value: str) -> list[str]:
+    """Splits a comma-separated labels field into a clean list of names."""
+    return [label.strip() for label in raw_value.split(",") if label.strip()]
+
+
+def parse_epic_markdown(markdown_content: str) -> tuple[str, str, list[str]]:
     """
-    Extracts ``(summary, description)`` from an Epic markdown document.
+    Extracts ``(summary, description, labels)`` from an Epic markdown document.
 
     Raises:
         BusinessRuleViolationException: If 'Epic Key' or 'Epic Title' is missing.
@@ -39,6 +45,7 @@ def parse_epic_markdown(markdown_content: str) -> tuple[str, str]:
 
     epic_key = None
     epic_title = None
+    labels: list[str] = []
     description_lines: list[str] = []
 
     for idx, line in enumerate(lines):
@@ -46,6 +53,8 @@ def parse_epic_markdown(markdown_content: str) -> tuple[str, str]:
             epic_key = line.split(":", 1)[1].strip()
         elif line.startswith("**Epic Title**:"):
             epic_title = line.split(":", 1)[1].strip()
+        elif line.startswith("**Labels**:"):
+            labels = _parse_labels(line.split(":", 1)[1])
         elif line.startswith("**Epic Description:**"):
             description_lines = lines[idx + 1:]
 
@@ -57,7 +66,7 @@ def parse_epic_markdown(markdown_content: str) -> tuple[str, str]:
 
     summary = f"{epic_key} - {epic_title}"
     description = "\n".join(line.strip() for line in description_lines).strip()
-    return summary, description
+    return summary, description, labels
 
 
 def parse_stories_markdown(markdown_content: str) -> list[ParsedStory]:
@@ -118,6 +127,7 @@ def _parse_story_block(block_lines: list[str]) -> ParsedStory:
     i_want_to: Optional[str] = None
     so_that: Optional[str] = None
     acceptance_criteria: list[str] = []
+    labels: list[str] = []
 
     collecting_acceptance_criteria = False
 
@@ -167,6 +177,8 @@ def _parse_story_block(block_lines: list[str]) -> ParsedStory:
                     story_points = int(field_value)
                 except ValueError:
                     story_points = None
+            elif field_name == "labels":
+                labels = _parse_labels(field_value)
 
     story_id = story_id or heading_story_id
 
@@ -190,4 +202,5 @@ def _parse_story_block(block_lines: list[str]) -> ParsedStory:
         i_want_to=i_want_to,
         so_that=so_that,
         acceptance_criteria=acceptance_criteria,
+        labels=labels,
     )
