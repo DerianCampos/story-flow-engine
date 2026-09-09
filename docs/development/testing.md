@@ -19,13 +19,23 @@ tests/
 │   │   │   └── test_story_points.py   # StoryPoints arithmetic
 │   │   └── exceptions/
 │   │       └── test_exceptions.py     # Exception hierarchy
-│   └── application/
-│       └── use_cases/
-│           ├── test_get_epic_with_stories.py        # Use case tests
-│           └── test_project_key_restrictions.py     # Authorization tests
+│   ├── application/
+│   │   ├── parsers/
+│   │   │   └── test_markdown_parser.py              # Epic/story Markdown parsing
+│   │   └── use_cases/
+│   │       ├── test_create_epic_with_stories.py     # Epic+story creation use case
+│   │       ├── test_get_epic_with_stories.py        # Use case tests
+│   │       └── test_project_key_restrictions.py     # Authorization tests
+│   └── infrastructure/
+│       └── external/
+│           └── jira/
+│               ├── test_adf_to_markdown.py           # ADF -> Markdown conversion
+│               └── test_markdown_to_adf.py           # Markdown -> ADF conversion
 └── integration/
     └── test_jira_repository.py        # Jira API client tests
 ```
+
+`tests/` has no `__init__.py` files; `pytest.ini` sets `pythonpath = .` so `src` is importable regardless of which subfolder pytest collects from.
 
 ## Running Tests
 

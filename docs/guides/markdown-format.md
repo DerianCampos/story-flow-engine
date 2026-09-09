@@ -94,7 +94,7 @@ The Jira issue summary is built as: `{Epic Key} - {Epic Title}`
 
 The description block is joined and sent as plain text in a Jira paragraph node.
 
-> **Note**: Currently only Epic Key, Title, and Description are parsed for Jira creation. Labels, Priority, Components, and Fix Version in the Markdown are recognized but not yet passed to the Jira API.
+> **Note**: Epic Key, Title, Description, and Labels are parsed and sent to Jira. Priority, Components, and Fix Version in the Markdown are recognized but not yet passed to the Jira API.
 
 ## User Story Format (`stories.md`)
 
@@ -147,6 +147,7 @@ The description block is joined and sent as plain text in a Jira paragraph node.
 | `**Epic Link**`            | Yes      | Parent epic key                     |
 | `**Priority**`             | Optional | Priority level                      |
 | `**Effort Estimate**`      | Optional | Story points or hours               |
+| `**Labels**`               | Optional | Comma-separated labels, sent to Jira |
 | `**As a**`                 | Yes      | User role                           |
 | `**I want to**`            | Yes      | Desired capability                  |
 | `**So that**`              | Yes      | Business value                      |
