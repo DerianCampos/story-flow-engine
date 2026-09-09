@@ -43,7 +43,6 @@ def interactive_menu(skip_initial_prompt=False):
             typer.echo("\nPress Enter to go back to the main menu...")
             input()
         os.system('cls' if os.name == 'nt' else 'clear')
-        show_welcome_message()
         menu_options = {
             "get_epic": "Retrieve an epic and its stories by JIRA key",
             "create_epic_with_stories": "Load an epic and its stories from a folder and upload to JIRA",
